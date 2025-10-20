@@ -1,4 +1,5 @@
-[Metric3D (1).md](https://github.com/user-attachments/files/22995775/Metric3D.1.md)
+
+[Metric3D.md](https://github.com/user-attachments/files/23003514/Metric3D.md)
 # Introduction
 **Metric3D**旨在通过单张图像实现zero-shot（零样本）度量3D重建。传统的3D重建方法依赖于多视图几何和相机校准，这些方法无法从单一视角进行准确的3D重建。近年来，一些基于深度学习的单目深度估计方法尝试解决这一问题，但它们通常依赖于相同相机模型的训练，无法进行跨相机和跨数据集的泛化，这些方法普遍存在一个共同挑战：**尺度不一致**<sup>**[1]**</sup>。该团队认为：**解决零样本单视角深度度量问题的关键在于大规模的数据训练和解决来自各种相机的度量歧义。**
 
@@ -23,7 +24,7 @@
 
 基于上图的透视原理，可以得出如下公式：
 
-![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)								（1）
+![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)						
 
 ![image](https://cdn.nlark.com/yuque/__latex/f8ffbb71f4836bc7742a45cbc4e7e4d9.svg)
 
@@ -49,7 +50,7 @@
 
 由于![image](https://cdn.nlark.com/yuque/__latex/25b3429808b03c4e0680325a7a7f1ea9.svg)，故像素焦距![image](https://cdn.nlark.com/yuque/__latex/c24d5eef5fc7c805f733cefd97da611e.svg),相应的图像分辨率![image](https://cdn.nlark.com/yuque/__latex/8ea87e026c90c640be6e00f8ad7f8e3b.svg)。
 
-由公式（1）：![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)，![image](https://cdn.nlark.com/yuque/__latex/c2bdf1dfba589c90a9feae613128f3b5.svg)
+由透视原理公式：![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)，![image](https://cdn.nlark.com/yuque/__latex/c2bdf1dfba589c90a9feae613128f3b5.svg)
 
 **总结：**像素尺寸不改变物体的成像尺寸，因此不会对深度估计造成影响。
 
@@ -293,6 +294,41 @@ data_basic=dict(
     depth_normalize=(0.3, 150), 
     crop_size = (544, 1216),    # 数据裁剪尺寸
 )
+```
+
+****
+
+**标准变换空间（metric3d-main/training/mono/utils/transform.py：123 -148）:**
+
+```python
+def random_on_canonical_transform(self, image, label, intrinsic, cam_model, to_random_ratio):
+        ori_h, ori_w, _ = image.shape
+        ori_focal = (intrinsic[0] + intrinsic[1]) / 2.0 # 原始相机焦距
+
+        to_canonical_ratio = self.canonical_focal / ori_focal # 缩放因子
+        to_scale_ratio = to_random_ratio
+        resize_ratio = to_canonical_ratio * to_random_ratio # 乘以随机缩放因子
+        # 获取缩放后尺寸
+        reshape_h = int(ori_h * resize_ratio + 0.5)
+        reshape_w = int(ori_w * resize_ratio + 0.5)
+        # 对原图缩放
+        image = cv2.resize(image, dsize=(reshape_w, reshape_h), interpolation=cv2.INTER_LINEAR)
+        # 若有内参，同步缩放光心、内参不变
+        if intrinsic is not None:
+            intrinsic = [self.canonical_focal, self.canonical_focal, intrinsic[2]*resize_ratio, intrinsic[3]*resize_ratio]
+        if label is not None:
+            # number of other labels may be less than that of image
+            label = cv2.resize(label, dsize=(reshape_w, reshape_h), interpolation=cv2.INTER_NEAREST)
+            # scale the label and camera intrinsics
+            label = label / to_scale_ratio
+        
+        if cam_model is not None:
+            # Should not directly resize the cam_model.
+            # Camera model should be resized in 'to canonical' stage, while it holds in 'random resizing' stage. 
+            # cam_model = cv2.resize(cam_model, dsize=(reshape_w, reshape_h), interpolation=cv2.INTER_LINEAR)
+            cam_model = build_camera_model(reshape_h, reshape_w, intrinsic)
+        
+        return image, label, intrinsic, cam_model, to_scale_ratio
 ```
 
 
