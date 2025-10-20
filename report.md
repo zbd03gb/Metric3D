@@ -1,8 +1,11 @@
-
-
-[Metric3D.md](https://github.com/user-attachments/files/22990323/Metric3D.md)
+[Metric3D (1).md](https://github.com/user-attachments/files/22995775/Metric3D.1.md)
 # Introduction
-**Metric3D**旨在通过单张图像实现zero-shot（零样本）度量3D重建。传统的3D重建方法依赖于多视图几何和相机校准，这些方法无法从单一视角进行准确的3D重建。近年来，一些基于深度学习的单目深度估计方法尝试解决这一问题，但它们通常依赖于相同相机模型的训练，无法进行跨相机和跨数据集的泛化，这些方法普遍存在一个共同挑战：**尺度不一致**<sup>**[1]**</sup>。该团队认为：**解决零样本单视角深度度量问题的关键在于大规模的数据训练和解决来自各种相机的度量歧义。**为了解决这个问题，Metric3D 引入了一种**标准相机变换（Canonical Camera Transformation，CSTM）**方法，将训练数据转换到标准相机空间，从而消除由相机内参不同带来的度量歧义。
+**Metric3D**旨在通过单张图像实现zero-shot（零样本）度量3D重建。传统的3D重建方法依赖于多视图几何和相机校准，这些方法无法从单一视角进行准确的3D重建。近年来，一些基于深度学习的单目深度估计方法尝试解决这一问题，但它们通常依赖于相同相机模型的训练，无法进行跨相机和跨数据集的泛化，这些方法普遍存在一个共同挑战：**尺度不一致**<sup>**[1]**</sup>。该团队认为：**解决零样本单视角深度度量问题的关键在于大规模的数据训练和解决来自各种相机的度量歧义。**
+
+为了解决这个问题，Metric3D 提出了: 
+
+1. 一种**标准相机变换（Canonical Camera Transformation，CSTM）**方法，将训练数据转换到标准相机空间，从而消除由相机内参不同带来的度量歧义。
+2. 一个**随机提议归一化损失（Random Proposal Normalization Loss，RPNL）**来有效地提高深度精度。
 
 通过在大量多样化的数据上训练，Metric3D 实现了对未见相机和未见场景的有效泛化。该方法在多个零样本评估基准上达到了与最先进方法相媲美的性能，尤其在度量3D重建和稠密SLAM映射任务中表现突出。
 
@@ -18,7 +21,7 @@
 
 
 
-基于上图的透视原理，可以得出一下公式：
+基于上图的透视原理，可以得出如下公式：
 
 ![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)								（1）
 
@@ -169,7 +172,9 @@
 ### 2.4.1 训练流程
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1760629842824-7e521db2-3da2-4b5e-85fe-989836120170.png)
 
-**训练目标：   **![image](https://cdn.nlark.com/yuque/__latex/aa2327c1a29daaa1739a7b287ba52a0d.svg)
+**训练目标：  			 **![image](https://cdn.nlark.com/yuque/__latex/aa2327c1a29daaa1739a7b287ba52a0d.svg)
+
+最小化标准变换空间下模型预测深度与GT深度的差值
 
 在训练阶段，网络不是直接学习原始深度![image](https://cdn.nlark.com/yuque/__latex/6144d255bfc233fd699d6eb68512ae6b.svg)，而是学习变换后的**canonical深度**![image](https://cdn.nlark.com/yuque/__latex/2b34d343c346a5716cc83259414e7a44.svg)：
 
@@ -179,7 +184,7 @@
 
 
 
-推理阶段：
+**推理阶段：**
 
 Metric3D 的网络结构包含两个主要部分：
 
@@ -219,7 +224,7 @@ Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal
 | 随机提案归一化损失![image](https://cdn.nlark.com/yuque/__latex/94a64cd20bc670a9ec7b7a8cd09ac2d3.svg) | 局部深度细节 | 局部 patch | 保留细节与近景差异 |
 
 
-
+四者联合，使得模型从“图像外观”中学到**真实、稳定、结构完整**的**度量深度。**  
 
 # 项目代码
 **源码链接： **[**https://github.com/YvanYin/Metric3D**](https://github.com/YvanYin/Metric3D)
@@ -230,11 +235,17 @@ conda create -n metric3d python = 3.8
 conda activate metric3d
 ```
 
+
+
 ```bash
 pip install -r requirement.txt
 ```
 
-**代码运行所需软件包：**
+**pip会自动下载兼容版本的相关环境依赖**
+
+****
+
+**代码运行环境：**
 
 ```python
 torch
@@ -254,7 +265,11 @@ imagecorruptions
 mmcv
 ```
 
-**pip会自动下载兼容版本的相关环境依赖**
+**输入如下指令即可运行代码:**
+
+```python
+python hubconf.py
+```
 
 ## 3.2 测试结果
 选取三张零样本图像，输出对应的度量深度图：
@@ -266,7 +281,7 @@ mmcv
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1760851371276-ca803685-9d77-470e-befb-8e195cc93509.png)
 
 ## 3.3 论文公式对应代码
-**标准相机变换空间参数（momo/config）：**
+**标准相机变换空间参数（metric3d-main/momo/config）：**
 
 ```python
 data_basic=dict(
@@ -282,7 +297,7 @@ data_basic=dict(
 
 
 
-**推理阶段，标准空间下深度还原为真实度量深度（hubconf.py: 199-201）:**
+**推理阶段，标准空间下深度还原为真实度量深度（metric3d-main/hubconf.py: 199-201）:**
 
 ```python
   #### de-canonical变换
@@ -293,7 +308,7 @@ data_basic=dict(
 
 
 
-**尺度不变对数损失**![image](https://cdn.nlark.com/yuque/__latex/36e3c1839b874e62f517279f7b0e32df.svg)**(training/mono/model/losses/SiLog.py: 17-26)**
+**尺度不变对数损失**![image](https://cdn.nlark.com/yuque/__latex/36e3c1839b874e62f517279f7b0e32df.svg)**(metric3d-main/training/mono/model/losses/SiLog.py: 17-26)：**
 
 ```python
 def silog_loss(self, prediction, target, mask):
@@ -382,20 +397,25 @@ class HDSNRandomLoss(nn.Module):
             
         return mask_new
         #return crop_y, crop_y_end, crop_x, crop_x_end
-    
-    def reorder_sem_masks(self, sem_label):
-        # reorder the semantic mask of a batch
+
+    # 筛选有意义的语义区域
+    def reorder_sem_masks(self, sem_label): 
+        # sem_label：语义分割标签，形状 [B, H, W]（每个像素是一个语义类别ID）
         assert sem_label.ndim == 3
+        # 从sem_label提取有效语义类别ID（0：背景类；sky_id:天空类）
         semantic_ids = torch.unique(sem_label[(sem_label>0) & (sem_label != self.sky_id)])
+        # 生成语义标签对应的二值掩码（有效标签：True；无效标签：False）
         sem_masks = [sem_label == id for id in semantic_ids]
         if len(sem_masks) == 0:
             # no valid semantic labels
             out = sem_label > 0
             return out
-
-        sem_masks = torch.cat(sem_masks, dim=0)
+        
+        sem_masks = torch.cat(sem_masks, dim=0)	# (num_classes,H,W)
+        # 过滤对应语义数量太少的区域（噪声、小目标）
         mask_batch = torch.sum(sem_masks.reshape(sem_masks.shape[0], -1), dim=1) > 500
         sem_masks = sem_masks[mask_batch]
+        # 语义类别过多，随机选取self.random_num个
         if sem_masks.shape[0] > self.random_num:
             balance_samples = np.random.choice(sem_masks.shape[0], self.random_num, replace=False)
             sem_masks = sem_masks[balance_samples, ...]
@@ -449,14 +469,15 @@ class HDSNRandomLoss(nn.Module):
         valid_pix = 0.0
 
         device = target.device
-        
+        # 按dataset名称决定该batch item是否有效
         batches_dataset = kwargs['dataset']
         self.batch_valid = torch.tensor([1 if batch_dataset not in self.disable_dataset else 0 \
             for batch_dataset in batches_dataset], device=device)[:,None,None,None]
 
         batch_limit = self.batch_limit
-        
+        # 获取裁剪区域掩码
         random_sample_masks = self.get_random_masks_for_batch((H, W)) # [N, H, W]
+        # 遍历batch中每张图像
         for i in range(B):
             # each batch
             mask_i = mask[i, ...] #[1, H, W]
@@ -468,7 +489,7 @@ class HDSNRandomLoss(nn.Module):
             pred_i = prediction[i, ...].unsqueeze(0).repeat(batch_limit, 1, 1, 1)
             target_i = target[i, ...].unsqueeze(0).repeat(batch_limit, 1, 1, 1)
 
-            # get semantic masks
+            # 获取语义掩码
             sem_label_i = sem_mask[i, ...] if sem_mask is not None else None
             if sem_label_i is not None:
                 sem_masks = self.reorder_sem_masks(sem_label_i) # [N, H, W]
@@ -491,27 +512,6 @@ class HDSNRandomLoss(nn.Module):
                     mask_valid=mask_sample)
                 valid_pix += torch.sum(mask_sample)
 
-                # conditional ssi loss
-                # rerank_mask_random_sem_loopi = random_sem_masks[conditional_rank_ids, ...][j*batch_limit:(j+1)*batch_limit, ...]
-                # rerank_mask_sample = (mask_i & rerank_mask_random_sem_loopi).unsqueeze(1) # [N, 1, H, W]
-                # loss_cond = self.conditional_ssi_mae(
-                #     prediction=pred_i[:rerank_mask_sample.shape[0], ...], 
-                #     target=target_i[:rerank_mask_sample.shape[0], ...], 
-                #     mask_valid=rerank_mask_sample)
-                # print(loss_cond / (torch.sum(rerank_mask_sample) + 1e-10), loss_cond, torch.sum(rerank_mask_sample))
-                # loss += loss_cond
-                # valid_pix += torch.sum(rerank_mask_sample)
-
-        # crop_y, crop_y_end, crop_x, crop_x_end = self.get_random_masks_for_batch((H, W)) # [N,]
-        # for j in range(B):
-        #     for i in range(self.random_num):
-        #         mask_crop = mask[j, :, crop_y[i]:crop_y_end[i], crop_x[i]:crop_x_end[i]][None, ...] #[1, 1, crop_h, crop_w]
-        #         target_crop = target[j, :, crop_y[i]:crop_y_end[i], crop_x[i]:crop_x_end[i]][None, ...]
-        #         pred_crop = prediction[j, :, crop_y[i]:crop_y_end[i], crop_x[i]:crop_x_end[i]][None, ...]
-        #         loss += self.ssi_mae(prediction=pred_crop, target=target_crop, mask_valid=mask_crop)
-        #         valid_pix += torch.sum(mask_crop)
-        
-        # the whole image
         mask = mask * self.batch_valid.bool()
         loss += self.ssi_mae(
                     prediction=prediction, 
@@ -523,8 +523,7 @@ class HDSNRandomLoss(nn.Module):
         if torch.isnan(loss).item() | torch.isinf(loss).item():
             loss = 0 * torch.sum(prediction)
             print(f'HDSNL NAN error, {loss}, valid pix: {valid_pix}')
-        return loss * self.loss_weight
-    
+        return loss * self.loss_weight    
 ```
 
 ****
@@ -544,7 +543,7 @@ class VNLoss(nn.Module):
     """
 
     """
-    参数:
+    成员变量:
     delta_cos: 过滤近线性/共线三点组的余弦阈值（越大越严格）
     delta_diff_x/y/z: 三点在 x/y/z 维度上的最小差异阈值（过近则丢弃）
     delta_z: z 方向（深度）过小视为无效
@@ -606,6 +605,7 @@ class VNLoss(nn.Module):
         pw = torch.cat([x, y, z], 1).permute(0, 2, 3, 1).contiguous()  # [B,H,W,3]
         return pw
 
+    # 每一张图片选取 N=H×W×sample_ratio 个三点组
     def select_index(self, B: int, H: int, W: int, mask: torch.Tensor):
         """
         基于有效像素掩码，随机为每张图采样三组索引 p1/p2/p3。
@@ -728,10 +728,10 @@ class VNLoss(nn.Module):
         mask_cos = torch.sum((norm_energy > delta_cos) + (norm_energy < -delta_cos), 1) > 3
         mask_cos = mask_cos.contiguous().view(m_batchsize, groups)
 
-        # 深度有效: 三个点的 z 都要大于 delta_z
+        # 深度有效: 三个点的z都要大于delta_z
         mask_pad = torch.sum(pw[:, :, 2, :] > self.delta_z, 2) == 3
 
-        # 过近过滤（xyz 任一轴均“太近”则忽略）
+        # 过近过滤（xyz任一轴均“太近”则忽略）
         mask_x = torch.sum(torch.abs(pw_diff[:, :, 0, :]) < delta_diff_x, 2) > 0
         mask_y = torch.sum(torch.abs(pw_diff[:, :, 1, :]) < delta_diff_y, 2) > 0
         mask_z = torch.sum(torch.abs(pw_diff[:, :, 2, :]) < delta_diff_z, 2) > 0
@@ -774,7 +774,7 @@ class VNLoss(nn.Module):
         # 防止 z==0 导致范数为 0
         pw_groups_pred[pw_groups_pred[:, :, 2, :] == 0] = 0.0001
 
-        # 将 [B,N,3,3] 根据 mask 压缩为 [1,n,3,3]
+        # 将 [B,N,3,3] 根据 mask 压缩为 [1,n,3,3]（n为有效3点组数量）
         mask_broadcast = mask_valid.repeat(1, 9).reshape(B, 3, 3, -1).permute(0, 3, 1, 2).contiguous()
         pw_groups_pred_not_ignore = pw_groups_pred[mask_broadcast].reshape(1, -1, 3, 3)
         pw_groups_gt_not_ignore = pw_groups_gt[mask_broadcast].reshape(1, -1, 3, 3)
@@ -797,48 +797,45 @@ class VNLoss(nn.Module):
         """
         loss = self.get_loss(prediction, target, mask, intrinsic, select, **kwargs)
         return loss
-
+        
+    # 核心计算公式
     def get_loss(self, prediction: torch.Tensor, target: torch.Tensor, mask: torch.Tensor, intrinsic: torch.Tensor, select: bool = True, **kwargs) -> torch.Tensor:
-        """
-        实际损失计算逻辑，见 forward 注释。
-        """
         B, _, H, W = target.shape
-        # 若尚未初始化，或 batch/尺寸变化导致缓存失配，则重建 u_m_u0/v_m_v0
-        if 'u_m_u0' not in self._buffers or 'v_m_v0' not in self._buffers \
+        # 确保u_m_u0/V_m_v0已根据当前batch大小/分辨率初始化
+        if 'u_m_u0' not in self._buffers or 'v_m_v0' not in self._buffers
             or self.u_m_u0.shape != torch.Size([B, 1, H, W]) or self.v_m_v0.shape != torch.Size([B, 1, H, W]):
             self.init_image_coor(intrinsic, H, W)
-
+        # gt/pred_points[1,N,3,3](1，样本数，坐标维，三个点)
         gt_points, pred_points = self.select_points_groups(target, prediction, intrinsic, mask)
 
-        # 由三点构边，叉乘求法线
-        gt_p12 = gt_points[:, :, :, 1] - gt_points[:, :, :, 0]
+        # 构造边向量
+        gt_p12 = gt_points[:, :, :, 1] - gt_points[:, :, :, 0] # [1,N,3]
         gt_p13 = gt_points[:, :, :, 2] - gt_points[:, :, :, 0]
         pred_p12 = pred_points[:, :, :, 1] - pred_points[:, :, :, 0]
         pred_p13 = pred_points[:, :, :, 2] - pred_points[:, :, :, 0]
-
-        gt_normal = torch.cross(gt_p12, gt_p13, dim=2)
+        # 法线
+        gt_normal = torch.cross(gt_p12, gt_p13, dim=2) # [1,N,3]
         pred_normal = torch.cross(pred_p12, pred_p13, dim=2)
-
         # 归一化并做数值保护
-        pred_norm = torch.norm(pred_normal, 2, dim=2, keepdim=True)
+        pred_norm = torch.norm(pred_normal, 2, dim=2, keepdim=True) #[1,N,1](每个虚法线的L2范数)
         gt_norm = torch.norm(gt_normal, 2, dim=2, keepdim=True)
         pred_mask = (pred_norm == 0.0).to(torch.float32) * self.eps
         gt_mask = (gt_norm == 0.0).to(torch.float32) * self.eps
         gt_norm = gt_norm + gt_mask
         pred_norm = pred_norm + pred_mask
-        gt_normal = gt_normal / gt_norm
-        pred_normal = pred_normal / pred_norm
+        gt_normal = gt_normal / gt_norm	# 归一化，[1,N,3]
+        pred_normal = pred_normal / pred_norm 
 
         # L1 差异并聚合
         loss = torch.abs(gt_normal - pred_normal)
-        loss = torch.sum(torch.sum(loss, dim=2), dim=0)  # 对 xyz 与组内求和 => [n]
+        loss = torch.sum(torch.sum(loss, dim=2), dim=0)  # 对xyz与组内求和.[1,N]->[N]
 
         if select:
             # 丢弃前 25% 最小损失项（聚焦难例）
             loss, _ = torch.sort(loss, dim=0, descending=False)
             loss = loss[int(loss.size(0) * 0.25):]
 
-        loss = torch.sum(loss) / (loss.numel() + self.eps)
+        loss = torch.sum(loss) / (loss.numel() + self.eps) # 平均
 
         # 数值检查
         if torch.isnan(loss).item() | torch.isinf(loss).item():
@@ -846,6 +843,34 @@ class VNLoss(nn.Module):
             print(f'VNL NAN error, {loss}')
         return loss * self.loss_weight
 ```
+
+根据代码还原的公式：
+
+![image](https://cdn.nlark.com/yuque/__latex/c8d53638caa1fa9ec29bc878cbecd63f.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/34f54f1cca5c5d74adc63b01ff57b19d.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/895c42cea2c4d117e7cc62fdc5093c41.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/ebc35a8cbd2484cc6a76ec6168ed475b.svg)
+
+
+
+![image](https://cdn.nlark.com/yuque/__latex/9992919c7bfba580dfa7990239b1a746.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/f3d9f884e9aa22f81444cd0b62d78179.svg)
+
+
+
+![image](https://cdn.nlark.com/yuque/__latex/e0b8be0be8eb796d7fb5414ce269d5bc.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/c4c4757fdbe7693e0c3d9063d69d9e4c.svg)
+
+
+
+![image](https://cdn.nlark.com/yuque/__latex/111db28ff5e3b90d297bb74993243962.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/eb41e70bc3275892759fc17042b7c013.svg)
 
 
 
@@ -1189,4 +1214,14 @@ class PWNPlanesLoss(nn.Module):
         )
         return loss
 ```
+
+![image](https://cdn.nlark.com/yuque/__latex/5c41185875bf9d725d8cd93a3a277a99.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/7179979adff603000d90eb4f56fc5f17.svg) ![image](https://cdn.nlark.com/yuque/__latex/3cad5dff74dada0a6c3d599e880fd9d2.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/06ef8ec4d6492b1ea86de7cde4a353b4.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/087b484a0c6dcd1d78436912d47a35a5.svg)
+
+![image](https://cdn.nlark.com/yuque/__latex/1782d0c145bcee078f50feb4d5f861b9.svg)
 
