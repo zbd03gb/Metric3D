@@ -1,9 +1,11 @@
 <h1 id="wNA6S">Introduction</h1>
 <h2 id="vuouW">1.1 研究背景</h2>
+
 **Metric3D**旨在通过单张图像实现zero-shot（零样本）度量3D重建。传统的3D重建方法依赖于多视图几何和相机校准，这些方法无法从单一视角进行准确的3D重建。近年来，一些基于深度学习的单目深度估计方法尝试解决这一问题，但它们通常依赖于相同相机模型的训练，无法进行跨相机和跨数据集的泛化。
 
 <h2 id="m6x3D">1.2 Related Work</h2>
 <h3 id="6023596e">1. 从单幅图像进行三维重建（Single-Image 3D Reconstruction）</h3>
+
 早期研究主要针对**特定类别的物体**（如汽车、飞机、桌子、人体等）进行重建。这类方法能够生成高质量的 3D 模型，但依赖于**类别特定的3D监督**，因此**无法推广到复杂场景**（如整幅室内或室外图像）。
 
 一些工作尝试从单张图像**重建整个场景**，如：
@@ -28,6 +30,7 @@
 近年研究通过构建**相对深度数据集**（如 DIW、OASIS）来学习相对关系，但这会丢失几何信息。为了改善几何质量，提出了**仿射不变深度学习**（如 MiDaS、LeReS、HDN），通过融合大规模多样数据提升泛化性。但这些方法**无法恢复绝对度量信息**。因此，“**如何同时获得强泛化性和准确的度量深度**”成为关键研究问题。
 
 <h3 id="7f106902">3. 大规模数据训练（Large-scale Data Training）</h3>
+
 近年来，大规模训练在视觉与语言任务中表现出显著优势（如 CLIP、MSEG等）。
 
 在深度预测中，也有类似趋势：
@@ -39,12 +42,13 @@
 本文（Metric3D）基于这一趋势，使用**超过800万张图像、1万多种相机模型**进行混合训练，从而实现**零样本度量深度估计**。
 
 <h2 id="PyJGS">1.3 创新点</h2>
+
 这些方法普遍存在一个共同挑战：**尺度不一致**<sup>**[1]**</sup>。该团队认为：**解决零样本单视角深度度量问题的关键在于大规模的数据训练和解决来自各种相机的度量歧义。**
 
 为了解决这个问题，Metric3D 提出了: 
 
-1. 一种**标准相机变换（Canonical Camera Transformation，CSTM）**方法，将训练数据转换到标准相机空间，从而消除由相机内参不同带来的度量歧义。
-2. 一个**随机提议归一化损失（Random Proposal Normalization Loss，RPNL）**来有效地提高深度精度。
+1. 一种**标准相机变换**（**Canonical Camera Transformation，CSTM**）方法，将训练数据转换到标准相机空间，从而消除由相机内参不同带来的度量歧义。
+2. 一个**随机提议归一化损失**（**Random Proposal Normalization Loss，RPNL**）来有效地提高深度精度。
 
 通过在大量多样化的数据上训练，Metric3D 实现了对未见相机和未见场景的有效泛化。该方法在多个零样本评估基准上达到了与最先进方法相媲美的性能，尤其在度量3D重建和稠密SLAM建图任务中表现突出。
 
@@ -55,6 +59,7 @@
 
 <h1 id="KmdXR">Methodolog</h1>
 <h2 id="VX93e">2.1 相关背景</h2>
+
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1760500185990-ad7eccf8-792b-48a5-9bff-d8ed1e4cf3e5.png)
 
 
@@ -71,6 +76,7 @@
 
 <h2 id="CKIpU">2.2 前置结论</h2>
 <h3 id="ebpDM">2.2.1 传感器尺寸和像素尺寸不影响度量深度估计：</h3>
+
 （1）传感器尺寸：
 
 传感器尺寸只会影响相机视场角（FOV），并不会影响公式（1）的![image](https://cdn.nlark.com/yuque/__latex/18d25ca4f77a9bbed9812e2bb0b350a5.svg),因此不影响深度估计。
@@ -89,11 +95,12 @@
 
 由透视原理公式：![image](https://cdn.nlark.com/yuque/__latex/9f6c82cfa58fa882e8c676f4ad435b23.svg)，![image](https://cdn.nlark.com/yuque/__latex/c2bdf1dfba589c90a9feae613128f3b5.svg)
 
-**总结：**像素尺寸不改变物体的成像尺寸，因此不会对深度估计造成影响。
+**总结**：像素尺寸不改变物体的成像尺寸，因此不会对深度估计造成影响。
 
 
 
 <h3 id="MWoPT">2.2.1 焦距对于度量深度估计至关重要：</h3>
+
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1760498585470-01671c46-d677-450a-b785-da2bfb4f9854.png)
 
 
@@ -121,7 +128,7 @@
 
 
 
-**核心思想：**设定一个固定的标准相机内参（![image](https://cdn.nlark.com/yuque/__latex/489913b0dae14c414dea3b4d70fb172e.svg)）。训练时把每条训练样本（图像或深度标签）通过变换映射到这个标准相机空间。网络在这个统一空间中学习。从该空间预测出的深度是“canonical depth”。推理阶段，再把预测的canonical depth反变换回原始相机尺度以得到最终metric深度。
+**核心思想**：设定一个固定的标准相机内参（![image](https://cdn.nlark.com/yuque/__latex/489913b0dae14c414dea3b4d70fb172e.svg)）。训练时把每条训练样本（图像或深度标签）通过变换映射到这个标准相机空间。网络在这个统一空间中学习。从该空间预测出的深度是“canonical depth”。推理阶段，再把预测的canonical depth反变换回原始相机尺度以得到最终metric深度。
 
 
 
@@ -129,8 +136,8 @@
 
 论文中提出两种可选的CSTM实现方法：
 
-+ **Method1：**Transforming depth labels（CSTM label）—— 对深度标签进行变换
-+ **Method2：**Transforming input images（CSTM image）—— 对输入图像进行变换
++ **Method1**：Transforming depth labels（CSTM label）—— 对深度标签进行变换
++ **Method2**：Transforming input images（CSTM image）—— 对输入图像进行变换
 
 
 
@@ -138,7 +145,7 @@
 
 **方法1：CSTM label（变换深度标签）**
 
-**图3的模糊度量是针对深度而言的。因此，我们的第一种方法直接转换真实深度标签来解决这个问题。**保持输入图像不变，直接缩放深度值标签，使其与canonical焦距![image](https://cdn.nlark.com/yuque/__latex/31faf2a2674ba5305a8ef8d2fde5dce1.svg)对齐。**原始相机模型变换为**![image](https://cdn.nlark.com/yuque/__latex/c7aee68545f2e006a784bdf5c7e8e3c0.svg)。
+**图3的模糊度量是针对深度而言的。因此，我们的第一种方法直接转换真实深度标签来解决这个问题**。保持输入图像不变，直接缩放深度值标签，使其与canonical焦距![image](https://cdn.nlark.com/yuque/__latex/31faf2a2674ba5305a8ef8d2fde5dce1.svg)对齐。**原始相机模型变换为**![image](https://cdn.nlark.com/yuque/__latex/c7aee68545f2e006a784bdf5c7e8e3c0.svg)。
 
 **方法流程：**
 
@@ -164,7 +171,7 @@
 
 **方法 2：CSTM image（变换图像）**
 
-**从另一个角度来看，这种歧义是由相似的图像外观造成的。因此该方法是对输入图像进行变换，以模拟标准摄像机的成像效果。**通过缩放输入图像的像素表示来模拟标准相机的成像效果，从而把图像外观变为canonical相机下的外观；同时要对深度图做相应地缩放保证像素对应关系，但不对深度值本身做数值比例缩放。
+**从另一个角度来看，这种歧义是由相似的图像外观造成的。因此该方法是对输入图像进行变换，以模拟标准摄像机的成像效果**。通过缩放输入图像的像素表示来模拟标准相机的成像效果，从而把图像外观变为canonical相机下的外观；同时要对深度图做相应地缩放保证像素对应关系，但不对深度值本身做数值比例缩放。
 
 **方法流程：**
 
@@ -185,19 +192,20 @@
 
 ![image](https://cdn.nlark.com/yuque/__latex/d2e1a98c7ee181894c18e1a6a46f4e65.svg)
 
-**好处：**更直观地把外观统一，适用于那些图像视角/FOV不同带来主要差异的情况
+**好处**：更直观地把外观统一，适用于那些图像视角/FOV不同带来主要差异的情况
 
 
 
 <h2 id="Fay4Y">2.4 训练</h2>
 <h3 id="WuaVu">2.4.1 训练流程</h3>
+
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1760629842824-7e521db2-3da2-4b5e-85fe-989836120170.png)
 
 
 
 给定一幅输入图像I，我们首先利用CSTM将其变换到标准空间。将变换后的图像Ic输入到一个标准的深度估计模型中，以产生标准空间中的预测度量深度![image](https://cdn.nlark.com/yuque/__latex/d21688f6faab1c0dce065d87d5e4eee1.svg)。在训练过程中，![image](data:image/svg+xml;utf8,%3Csvg%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%222.868ex%22%20height%3D%222.509ex%22%20style%3D%22vertical-align%3A%20-0.671ex%3B%22%20viewBox%3D%220%20-791.3%201235%201080.4%22%20role%3D%22img%22%20focusable%3D%22false%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20aria-labelledby%3D%22MathJax-SVG-1-Title%22%3E%0A%3Ctitle%20id%3D%22MathJax-SVG-1-Title%22%3EEquation%3C%2Ftitle%3E%0A%3Cdefs%20aria-hidden%3D%22true%22%3E%0A%3Cpath%20stroke-width%3D%221%22%20id%3D%22E1-MJMATHI-44%22%20d%3D%22M287%20628Q287%20635%20230%20637Q207%20637%20200%20638T193%20647Q193%20655%20197%20667T204%20682Q206%20683%20403%20683Q570%20682%20590%20682T630%20676Q702%20659%20752%20597T803%20431Q803%20275%20696%20151T444%203L430%201L236%200H125H72Q48%200%2041%202T33%2011Q33%2013%2036%2025Q40%2041%2044%2043T67%2046Q94%2046%20127%2049Q141%2052%20146%2061Q149%2065%20218%20339T287%20628ZM703%20469Q703%20507%20692%20537T666%20584T629%20613T590%20629T555%20636Q553%20636%20541%20636T512%20636T479%20637H436Q392%20637%20386%20627Q384%20623%20313%20339T242%2052Q242%2048%20253%2048T330%2047Q335%2047%20349%2047T373%2046Q499%2046%20581%20128Q617%20164%20640%20212T683%20339T703%20469Z%22%3E%3C%2Fpath%3E%0A%3Cpath%20stroke-width%3D%221%22%20id%3D%22E1-MJMATHI-63%22%20d%3D%22M34%20159Q34%20268%20120%20355T306%20442Q362%20442%20394%20418T427%20355Q427%20326%20408%20306T360%20285Q341%20285%20330%20295T319%20325T330%20359T352%20380T366%20386H367Q367%20388%20361%20392T340%20400T306%20404Q276%20404%20249%20390Q228%20381%20206%20359Q162%20315%20142%20235T121%20119Q121%2073%20147%2050Q169%2026%20205%2026H209Q321%2026%20394%20111Q403%20121%20406%20121Q410%20121%20419%20112T429%2098T420%2083T391%2055T346%2025T282%200T202%20-11Q127%20-11%2081%2037T34%20159Z%22%3E%3C%2Fpath%3E%0A%3C%2Fdefs%3E%0A%3Cg%20stroke%3D%22currentColor%22%20fill%3D%22currentColor%22%20stroke-width%3D%220%22%20transform%3D%22matrix(1%200%200%20-1%200%200)%22%20aria-hidden%3D%22true%22%3E%0A%20%3Cuse%20xlink%3Ahref%3D%22%23E1-MJMATHI-44%22%20x%3D%220%22%20y%3D%220%22%3E%3C%2Fuse%3E%0A%20%3Cuse%20transform%3D%22scale(0.707)%22%20xlink%3Ahref%3D%22%23E1-MJMATHI-63%22%20x%3D%221171%22%20y%3D%22-213%22%3E%3C%2Fuse%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E)由一个GT深度![image](https://cdn.nlark.com/yuque/__latex/7a602cef87d217c377c859d363efdeb6.svg)监督，![image](https://cdn.nlark.com/yuque/__latex/7a602cef87d217c377c859d363efdeb6.svg)也被转换到正则空间。在推理中，在标准空间中产生度量深度![image](https://cdn.nlark.com/yuque/__latex/d21688f6faab1c0dce065d87d5e4eee1.svg)后，我们执行去标准变换将其转换回原始输入I的空间。标准空间变换和去标准变换使用相机内参执行。
 
-**训练目标：  			 **![image](https://cdn.nlark.com/yuque/__latex/aa2327c1a29daaa1739a7b287ba52a0d.svg)
+**训练目标：**![image](https://cdn.nlark.com/yuque/__latex/aa2327c1a29daaa1739a7b287ba52a0d.svg)
 
 最小化标准变换空间下模型预测深度与GT深度的差值
 
@@ -205,11 +213,12 @@
 
 ![image](https://cdn.nlark.com/yuque/__latex/a1026a3cab90c0e3dd1bdb7cd5062354.svg)
 
-这样网络学习到的深度处于一个固定的 canonical 相机体系中。因此，在训练阶段，深度尺度是一致的、可比较的。 Metric3D 使用了 **11 个数据集**、超过 **10K 不同相机** 的数据进行联合训练(** 所有训练数据都包含相机内参，并被用于规范化相机变换模块（CSTM)**)。每个样本都被转化到同一 canonical 相机空间，这种“统一视角”的训练让模型学会了跨相机的深度尺度。  
+这样网络学习到的深度处于一个固定的 canonical 相机体系中。因此，在训练阶段，深度尺度是一致的、可比较的。 Metric3D 使用了 **11 个数据集**、超过 **10K 不同相机** 的数据进行联合训练(**所有训练数据都包含相机内参，并被用于规范化相机变换模块**（**CSTM**))。每个样本都被转化到同一 canonical 相机空间，这种“统一视角”的训练让模型学会了跨相机的深度尺度。  
 
 
 
 <h3 id="NGC9a">2.4.2 相机内参获取</h3>
+
 **对于训练阶段：**
 
 Metric3D 训练时共使用 **11 个公开 RGB-D 数据集**（约 800 万张图像）。论文明确指出：
@@ -224,7 +233,7 @@ Metric3D 训练时共使用 **11 个公开 RGB-D 数据集**（约 800 万张图
 “**We employ their provided camera intrinsic parameters to perform our proposed canonical space transformation**.”  
 —— 在测试时使用数据集中提供的相机内参执行标准化变换。
 
-此外，对于wild images，论文在**“Metrology in the wild**”部分说明了内参获取方式：
+此外，对于wild images，论文在“**Metrology in the wild**”部分说明了内参获取方式：
 
 “**To show the robustness and accuracy of our recovered metric 3D, we download Flickr photos captured by various cameras and collect coarse camera intrinsic parameters from their metadata.**”
 
@@ -238,9 +247,10 @@ Metric3D 训练时共使用 **11 个公开 RGB-D 数据集**（约 800 万张图
 
 
 <h3 id="ybkRW">2.4.3 损失函数</h3>
+
 **尺度平移不变损失**被广泛用于仿射不变性深度估计。在计算损失时，会用整张图的均值或方差进行归一化，使得深度的局部差异（特别是近距离的细节）被“平均化”或“压扁”掉。
 
-Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal Normalization Loss，RPNL）。该损失不再在整幅图上归一化，而是随机**裁剪多个局部patch（论文中 M=32 个），每个patch的边长尺寸在原图尺寸的12.5%到50%随机选取。**在每个 patch 内独立进行局部归一化（使用 median absolute deviation, MAD），计算局部归一化误差最后取平均。
+Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal Normalization Loss，RPNL）。该损失不再在整幅图上归一化，而是随机**裁剪多个局部patch（论文中 M=32 个），每个patch的边长尺寸在原图尺寸的12.5%到50%随机选取**。在每个 patch 内独立进行局部归一化（使用 median absolute deviation, MAD），计算局部归一化误差最后取平均。
 
 **具体形式：**
 
@@ -265,6 +275,7 @@ Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal
 四者联合，使得模型从“图像外观”中学到**真实、稳定、结构完整**的**度量深度。**  
 
 <h1 id="btCZJ">Experiments</h1>
+
 **实验设置如下表所示：**
 
 | **评估对象** | **数据集** | **评估指标** |
@@ -276,6 +287,7 @@ Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal
 
 
 <h2 id="dQrWT">3.1 零样本学习泛化性检验</h2>
+
 为了评估预测度量深度的准确性，我们首先在NYUv2 ，KITTI上与最先进的度量深度预测方法( SOTA )进行了比较。我们使用相同的模型来做所有的评估。结果如下表。在没有任何微调或度量调整的情况下，我们可以实现与SOTA方法相媲美的性能。
 
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1762851401940-a72ecb9b-ce51-4f32-a2d1-6210bdc033ac.png)
@@ -284,6 +296,7 @@ Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal
 
 <h2 id="dRIBE">3.2 基于metric3d的应用效果</h2>
 <h3 id="d272e">3.2.1 三维场景重建</h3>
+
 为了证明我们的工作可以在野外恢复3D度量形状，我们首先在训练过程中没有看到的9个NYUv2场景上进行了定量比较。我们预测每帧的度量深度，然后将它们与提供的相机姿态融合在一起。结果报告于表2 .
 
 ![](https://cdn.nlark.com/yuque/0/2025/png/58377837/1762852585195-b3e5c0da-d6ab-4960-8021-6940ca199ef7.png)
@@ -335,9 +348,11 @@ Metric3D基于这个问题提出了随机提案归一化损失（Random Proposal
 
 
 <h1 id="nMqgT">项目代码</h1>
-**源码链接： **[**https://github.com/YvanYin/Metric3D**](https://github.com/YvanYin/Metric3D)
+
+**源码链接**：[**https://github.com/YvanYin/Metric3D**](https://github.com/YvanYin/Metric3D)
 
 <h2 id="d6Q4T">3.1 创建环境 && 安装依赖</h2>
+
 ```bash
 conda create -n metric3d python = 3.8
 conda activate metric3d
@@ -408,7 +423,7 @@ mmcv
 
 **metric3d_v1:**
 
-****[**https://huggingface.co/JUGGHM/Metric3D/resolve/main/convtiny_hourglass_v1.pth**](https://huggingface.co/JUGGHM/Metric3D/resolve/main/convtiny_hourglass_v1.pth)
+[**https://huggingface.co/JUGGHM/Metric3D/resolve/main/convtiny_hourglass_v1.pth**](https://huggingface.co/JUGGHM/Metric3D/resolve/main/convtiny_hourglass_v1.pth)
 
 [**https://huggingface.co/JUGGHM/Metric3D/resolve/main/convlarge_hourglass_0.3_150_step750k_v1.1.pth**](https://huggingface.co/JUGGHM/Metric3D/resolve/main/convlarge_hourglass_0.3_150_step750k_v1.1.pth)
 
